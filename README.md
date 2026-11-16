@@ -61,9 +61,9 @@ ColorOS 的人脸传感器向 `system_server` 上报 `4095`。因此当普通应
 
 ## CI 自动构建与发布
 
-项目通过 [GitHub Actions](.github/workflows/build-release.yml) 在推送时自动构建：
+项目通过 [GitHub Actions](.github/workflows/build-release.yml) 在推送到 `master` 分支时自动构建：
 
-- **推送到 `main` 分支**：自动构建 Release APK（以 debug 密钥签名），并作为构建产物（Artifact）上传，可在 Actions 页面下载。
-- **推送 `v*` 标签**（如 `v1.0.0`）：自动构建、签名，并创建 GitHub Release 附上 APK。
-
-使用方法：在仓库页面点击 *Create a new release*，输入类似 `v1.0.0` 的标签，即可触发自动构建并生成 Release。
+- 当 `app/build.gradle.kts` 中的 `versionCode` / `versionName` 发生变化时（或手动触发 workflow），自动构建 Release APK 并创建 GitHub Release（标签为 `v{versionName}`）。
+- APK 使用仓库中提交的 AOSP 公开测试密钥（`debug.keystore`，即 `build/target/product/security/testkey`）签名，因此每次构建签名一致，可以直接覆盖更新。
+- 由于签名与原作者发布的版本不同，首次安装前需要先卸载原模块。
+- 如需使用私有密钥，在项目根目录放置 `signing.properties`（`storeFile`、`storePassword`、`keyAlias`、`keyPassword`），Release 构建会改用该密钥。

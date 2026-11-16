@@ -4,9 +4,10 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+// Optional private release key. Without it, release builds use the committed debug key.
+val signingPropsFile = rootProject.file("signing.properties")
 val signingProps = Properties().apply {
-    val file = rootProject.file("signing.properties")
-    if (file.exists()) load(file.inputStream())
+    if (signingPropsFile.exists()) load(signingPropsFile.inputStream())
 }
 
 android {
@@ -19,12 +20,20 @@ android {
         applicationId = "com.way.facebiometricfix"
         minSdk = 35
         targetSdk = 36
-        versionCode = 4
-        versionName = "2.1"
+        versionCode = 5
+        versionName = "2.2"
 
     }
 
     signingConfigs {
+        // AOSP's public test key (build/target/product/security/testkey), committed so
+        // every build (local or CI) has the same signature and updates install over each other.
+        getByName("debug") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         create("release") {
             storeFile = file(signingProps.getProperty("storeFile", "release.jks"))
             storePassword = signingProps.getProperty("storePassword", "")
@@ -35,7 +44,9 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = signingConfigs.getByName(
+                if (signingPropsFile.exists()) "release" else "debug"
+            )
             optimization {
                 enable = true
             }
