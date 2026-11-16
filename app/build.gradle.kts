@@ -12,7 +12,7 @@ val signingProps = Properties().apply {
 android {
     namespace = "com.way.facebiometricfix"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
@@ -49,4 +49,5 @@ android {
 
 dependencies {
     compileOnly("io.github.libxposed:api:102.0.0")
+    implementation("io.github.libxposed:service:102.0.0")
 }

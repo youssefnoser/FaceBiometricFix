@@ -1,4 +1,17 @@
 <resources>
     <string name="app_name">FaceBiometricFix</string>
     <string name="xposed_description">将 ColorOS 人脸传感器强度修正为标准 Class3 强度，使人脸解锁可用于 BiometricPrompt，作者：WAYYYAW（github）</string>
+
+    <string name="status_connected">Connected to %1$s %2$s. Changes are saved right away. If an app still behaves the old way, reboot.</string>
+    <string name="status_not_connected">Not connected to LSPosed. Enable this module in LSPosed, then reopen this app. Changes can\'t be saved until then.</string>
+    <string name="status_no_prefs">Connected to LSPosed, but it doesn\'t support module settings. Changes can\'t be saved.</string>
+    <string name="default_allow">Allow face unlock for all apps</string>
+    <string name="explanation">Turn face unlock off for apps that protect data with a biometric key, such as password managers (Aegis, Bitwarden) and banking apps. Face unlock on this device can\'t unlock those keys, so they fail when face is used. With face off, they\'ll offer fingerprint only.\n\nTap an app to switch it. Long-press to make it follow the default again.</string>
+    <string name="search_hint">Search apps</string>
+    <string name="show_system_apps">Show system apps</string>
+    <string name="setting_default">Follows default</string>
+    <string name="setting_allowed">Always allowed</string>
+    <string name="setting_blocked">Always blocked</string>
+    <string name="reset_done">%1$s now follows the default</string>
+    <string name="save_failed">Couldn\'t save: %1$s</string>
 </resources>

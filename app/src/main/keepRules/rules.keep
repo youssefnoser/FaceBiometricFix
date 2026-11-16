@@ -1,5 +1,6 @@
 # The libxposed loader instantiates this class from META-INF/xposed/java_init.list.
 -dontwarn io.github.libxposed.annotation.**
+-dontwarn androidx.annotation.**
 -keep,allowoptimization public class com.way.facebiometricfix.MainHook {
     public <init>();
 }

@@ -1,5 +1,6 @@
 package com.way.facebiometricfix
 
+import android.content.SharedPreferences
 import android.util.Log
 import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModule
@@ -14,6 +15,34 @@ class MainHook : XposedModule() {
     private fun logError(msg: String, tr: Throwable) {
         log(Log.ERROR, TAG, msg, tr)
     }
+
+    @Volatile
+    private var policyPrefs: SharedPreferences? = null
+
+    @Volatile
+    private var policyPrefsFailed = false
+
+    /**
+     * Per-app policy written by the settings UI. Fetched lazily because the framework's
+     * preference service may not be ready while system_server is starting. Returns null
+     * if it can't be read, in which case [FacePolicy] falls back to the original behaviour.
+     */
+    private fun policyPrefs(): SharedPreferences? {
+        policyPrefs?.let { return it }
+        return runCatching { getRemotePreferences(FacePolicy.GROUP) }
+            .onSuccess { policyPrefs = it }
+            .onFailure {
+                if (!policyPrefsFailed) {
+                    policyPrefsFailed = true
+                    logError("Can't read per-app policy, using defaults", it)
+                }
+            }
+            .getOrNull()
+    }
+
+    private fun isFaceAllowedFor(packageName: String): Boolean =
+        runCatching { FacePolicy.isAllowed(policyPrefs(), packageName) }
+            .getOrElse { FacePolicy.isAllowed(null, packageName) }
 
     private val preAuthContextHooker = XposedInterface.Hooker { chain ->
         val packageName = runCatching { chain.getArg(4) as? String }.getOrNull()
@@ -32,10 +61,10 @@ class MainHook : XposedModule() {
         val sensorStrength = runCatching { chain.getArg(0) as? Int }.getOrNull() ?: return@Hooker false
         val requestedStrength = runCatching { chain.getArg(1) as? Int }.getOrNull() ?: return@Hooker false
         if (packageName != null &&
-            packageName != CODEBOOK_PACKAGE &&
             sensorStrength == OEM_STRENGTH_MASK &&
             (requestedStrength == STRONG_AUTHENTICATORS ||
-                requestedStrength == WEAK_AUTHENTICATORS)
+                requestedStrength == WEAK_AUTHENTICATORS) &&
+            isFaceAllowedFor(packageName)
         ) {
             return@Hooker true
         }
@@ -59,6 +88,7 @@ class MainHook : XposedModule() {
 
     override fun onHotReloading(param: XposedModuleInterface.HotReloadingParam): Boolean {
         APP_PRE_AUTH_PACKAGE.remove()
+        policyPrefs = null
         logInfo("Hot reloading biometrics hooks in system_server ...")
         return true
     }
@@ -187,6 +217,5 @@ class MainHook : XposedModule() {
         private const val STATUS_INSUFFICIENT_STRENGTH = 4
         private const val FACE_MODALITY = 8
         private const val SYSTEM_UI_PACKAGE = "com.android.systemui"
-        private const val CODEBOOK_PACKAGE = "com.coloros.codebook"
     }
 }
